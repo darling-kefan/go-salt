@@ -2,7 +2,7 @@ package salt_test
 
 import (
 	"testing"
-	"maintain/go-salt"
+	"github.com/darling-kefan/go-salt"
 )
 
 const (
@@ -112,7 +112,7 @@ func _TestCmdAsync(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	ret, err := c.CmdAsync("*", "cmd.run", "ifconfig", "glob")
+	ret, err := c.CmdAsync("*", "cmd.run", []string{"ifconfig"}, "glob")
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -133,7 +133,7 @@ func _TestCmd(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	ret, err := c.Cmd("*", "cmd.run", "uptime", "glob")
+	ret, err := c.Cmd("*", "cmd.run", []string{"uptime"}, "glob")
 	if err != nil {
 		t.Errorf("%v", err)
 	}
