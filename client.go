@@ -3,6 +3,7 @@ package salt
 
 import (
 	"fmt"
+	"errors"
 	"encoding/json"
 )
 
@@ -130,22 +131,48 @@ func (c *Client) Job(id string) (Job, error) {
 // range - Use a Range server for matching
 // compound - Pass a compound match string
 // ipcidr - Match based on Subnet (CIDR notation) or IPv4 address.
-func (c *Client) CmdAsync(tgt string, fun string, arg []string, exprForm string) (jobId string, err error) {
-	args := struct{
-		Client   string   `json:"client"`
-		Tgt      string   `json:"tgt"`
-		Fun      string   `json:"fun"`
-		Arg      []string `json:"arg"`
-		ExprForm string   `json:"exprForm"`
-	}{
-		Client:   "local_async",
-		Tgt:      tgt,
-		Fun:      fun,
-		Arg:      arg,
-		ExprForm: exprForm,
+func (c *Client) CmdAsync(tgt interface{}, fun string, arg []string, exprForm string) (jobId string, err error) {
+	var param []byte
+	switch exprForm {
+	case "list":
+		if tgtVal, ok := tgt.([]string); ok {
+			args := struct{
+				Client   string   `json:"client"`
+				Tgt      []string `json:"tgt"`
+				Fun      string   `json:"fun"`
+				Arg      []string `json:"arg"`
+				ExprForm string   `json:"expr_form"`
+			}{
+				Client:   "local_async",
+				Tgt:      tgtVal,
+				Fun:      fun,
+				Arg:      arg,
+				ExprForm: exprForm,
+			}
+			param, err = json.Marshal(args)
+		} else {
+			return jobId, errors.New("tgt must []string when expr_form is list")
+		}
+	default:
+		if tgtVal, ok := tgt.(string); ok {
+			args := struct{
+				Client   string   `json:"client"`
+				Tgt      string   `json:"tgt"`
+				Fun      string   `json:"fun"`
+				Arg      []string `json:"arg"`
+				ExprForm string   `json:"expr_form"`
+			}{
+				Client:   "local_async",
+				Tgt:      tgtVal,
+				Fun:      fun,
+				Arg:      arg,
+				ExprForm: exprForm,
+			}
+			param, err = json.Marshal(args)
+		} else {
+			return jobId, errors.New("tgt must string when expr_form is not list")
+		}
 	}
-	param, err := json.Marshal(args)
-
 	// 两种请求方式任选其一
 	// resp, err := c.Connector.Post("/", param)
 	resp, err := c.Connector.Post("/minions", param)
@@ -169,21 +196,48 @@ func (c *Client) CmdAsync(tgt string, fun string, arg []string, exprForm string)
 }
 
 // 异步执行salt cmd模块
-func (c *Client) Cmd(tgt string, fun string, arg []string, exprForm string) (result Result, err error) {
-	args := struct{
-		Client   string   `json:"client"`
-		Tgt      string   `json:"tgt"`
-		Fun      string   `json:"fun"`
-		Arg      []string `json:"arg"`
-		ExprForm string   `json:"exprForm"`
-	}{
-		Client:   "local",
-		Tgt:      tgt,
-		Fun:      fun,
-		Arg:      arg,
-		ExprForm: exprForm,
+func (c *Client) Cmd(tgt interface{}, fun string, arg []string, exprForm string) (result Result, err error) {
+	var param []byte
+	switch exprForm {
+	case "list":
+		if tgtVal, ok := tgt.([]string); ok {
+			args := struct{
+				Client   string   `json:"client"`
+				Tgt      []string `json:"tgt"`
+				Fun      string   `json:"fun"`
+				Arg      []string `json:"arg"`
+				ExprForm string   `json:"expr_form"`
+			}{
+				Client:   "local",
+				Tgt:      tgtVal,
+				Fun:      fun,
+				Arg:      arg,
+				ExprForm: exprForm,
+			}
+			param, err = json.Marshal(args)
+		} else {
+			return result, errors.New("tgt must []string when expr_form is list")
+		}
+	default:
+		if tgtVal, ok := tgt.(string); ok {
+			args := struct{
+				Client   string   `json:"client"`
+				Tgt      string   `json:"tgt"`
+				Fun      string   `json:"fun"`
+				Arg      []string `json:"arg"`
+				ExprForm string   `json:"expr_form"`
+			}{
+				Client:   "local",
+				Tgt:      tgtVal,
+				Fun:      fun,
+				Arg:      arg,
+				ExprForm: exprForm,
+			}
+			param, err = json.Marshal(args)
+		} else {
+			return result, errors.New("tgt must string when expr_form is not list")
+		}
 	}
-	param, err := json.Marshal(args)
 	// 两种请求方式任选其一
 	// resp, err := c.Connector.Post("/", param)
 	resp, err := c.Connector.Post("/", param)
